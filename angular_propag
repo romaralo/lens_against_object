@@ -1,0 +1,61 @@
+%% Input parameters
+M=250; % Number of pixels
+L=10; % Length of the field of view (in meters)
+rad=1; % Radius of aperture (in meters)
+lambda=500e-6; % Wavelength of light (in meters)
+z=200; %Propagation distance (in meters)
+f=100
+k=2*pi/lambda; % Wavenumber
+w=1
+
+%% Coordinate vectors/grids
+dx=L/N; % Length of one pixel
+x=-L/2:dx:L/2-dx; % Coordinate vector (in meters)
+fx=-1/(2*dx):1/L:1/(2*dx)-1/L; % Spatial frequency vector (in 1/meters)
+
+% Aquí cambiaba las coordenadas, como indica el programa de against de lens de numerical methods (libro).
+[x2,y2]=meshgrid(lambda*fx*f)
+tA=exp(1j*k/(2*f)*(x2.^2+y2.^2))/(1j*lambda*f)
+
+[X,Y]=meshgrid(x,x); % Coordinate grids (real space)
+[FX,FY]=meshgrid(fx,fx); % Coordinate grids (Fourier space)
+
+%% Define aperture
+R=sqrt(X.^2+Y.^2); % Radial coordinate
+Aperture=double(R<rad); % Aperture
+%Aperture=rect(X/(2*w)).*rect(Y/(2*w))
+
+%% Calculate propagated field
+
+F_Aperture=ifftshift(fft2(fftshift(Aperture))); %Fourier transform (i.e. angular spectrum) of aperture
+
+H=exp(1i*z*sqrt(k^2-(2*pi*FX).^2-(2*pi*FY).^2)); % Transfer function e^{i k_z z}
+
+propfield=iF(F(Aperture).*H); % Calculate the propagated field
+I=abs(propfield.^2)
+
+% Plot the propagated field
+figure(1)
+imagesc(x,x,I)
+colormap('gray')
+xlabel('x(\mum)')
+ylabel('y(\mum)')
+title(['z = ' num2str(z) '\mum'])
+colorbar
+caxis([0 1.5])
+axis image
+
+figure(2) %irradiance profile 
+plot(x,I(M/2+1,:)); 
+xlabel('x (m)'); ylabel('Irradiance'); 
+title(['z= ',num2str(z),' m']); 
+
+figure(3) %plot obs field mag 
+plot(x,abs(propfield(M/2+1,:))); 
+xlabel('x (m)'); ylabel('Magnitude'); 
+title(['z= ',num2str(z),' m']); 
+
+figure(4) %plot obs field phase 
+plot(x,unwrap(angle(propfield(M/2+1,:)))); 
+xlabel('x (m)'); ylabel('Phase (rad)'); 
+title(['z= ',num2str(z),' m']);
