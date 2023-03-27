@@ -1,0 +1,49 @@
+%% Input parameters
+N=512; % Number of pixels
+L=10; % Length of the field of view (in meters)
+rad=1; % Radius of aperture (in meters)
+lambda=500e-6; % Wavelength of light (in meters)
+z=1000; %Propagation distance (in meters)
+%f=1500
+k=2*pi/(lambda); % Wavenumber
+w=1
+
+%% Coordinate vectors/grids
+dx=L/N; % Length of one pixel
+x=-L/2:dx:L/2-dx; % Coordinate vector (in meters)
+fx=-1/(2*dx):1/L:1/(2*dx)-1/L; % Spatial frequency vector (in 1/meters)
+
+[X,Y]=meshgrid(x,x); % Coordinate grids (real space)
+[FX,FY]=meshgrid(fx,fx); % Coordinate grids (Fourier space)
+
+%% Define aperture
+R=sqrt(X.^2+Y.^2); % Radial coordinate
+Aperture=double(R<rad); % Aperture
+
+A=imread('FFF.png'); %read image file 
+A= rgb2gray(A);
+A = imresize(A,[N N]);
+A=double(A)
+
+%% Lens. Transf function.
+%f=400
+%tA=exp(-1j*k*(X.^2+Y.^2)/(2*f))
+
+%% Calculate propagated field
+
+k=2*pi/lambda; % Wavenumber
+
+Q=exp(1i*k*(X.^2+Y.^2)/(2*z)); % Quadratic phase factor
+
+propfield=F(A.*Q)/(lambda*z); % Calculate the propagated field
+propx=fx*lambda*z; % Coordinate vector in the final plane
+
+%Plot the propagated field
+figure(10)
+imagesc(propx,propx,abs(propfield))
+colormap('gray')
+xlabel('x(mm)')
+ylabel('y(mm)')
+title(['z = ' num2str(z) 'mm'])
+colorbar
+axis image
